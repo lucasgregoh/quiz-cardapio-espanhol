@@ -302,20 +302,6 @@ html,body{min-height:100vh;background:var(--bg);font-family:'Montserrat',sans-se
 /* SOCIAL PROOF STRIP */
 .social-strip{background:var(--green);color:#fff;padding:10px 20px;text-align:center;font-size:13px;font-weight:700;width:100%;letter-spacing:.3px}
 .social-strip span{opacity:.8;font-size:11px;margin-left:6px}
-/* PURCHASE TAG */
-#purchaseTag{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:8000;padding:12px 12px 0;pointer-events:none}
-#purchaseTag .pt-inner{background:#1a1a1a;border-radius:14px;padding:11px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.35);pointer-events:all;animation:ptSlideIn .4s cubic-bezier(.34,1.56,.64,1)}
-#purchaseTag .pt-avatar{width:36px;height:36px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;position:relative}
-#purchaseTag .pt-text{flex:1;min-width:0}
-#purchaseTag .pt-name{font-size:12px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#purchaseTag .pt-product{font-size:11px;color:rgba(255,255,255,.65);font-weight:500;margin-top:1px}
-#purchaseTag .pt-badge{font-size:10px;font-weight:800;padding:3px 8px;border-radius:99px;flex-shrink:0}
-#purchaseTag .pt-badge.completo{background:var(--green);color:#fff}
-#purchaseTag .pt-badge.basico{background:#6b7280;color:#fff}
-#purchaseTag .pt-close{background:none;border:none;color:rgba(255,255,255,.4);font-size:16px;cursor:pointer;padding:0 0 0 4px;line-height:1;flex-shrink:0}
-@keyframes ptSlideIn{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
-@keyframes ptFadeOut{from{opacity:1}to{opacity:0;transform:translateY(-10px)}}
-@keyframes ptPulse{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.6)}70%{box-shadow:0 0 0 7px rgba(34,197,94,0)}}
 
 /* UTILITY */
 .mt-8{margin-top:8px}.mt-16{margin-top:16px}.mt-24{margin-top:24px}
@@ -1720,21 +1706,6 @@ img[data-src] { background:#f3f4f6; min-height:40px; }
 </div>
 
 
-<!-- ========== PURCHASE TAG ========== -->
-<div id="purchaseTag" style="display:none">
-  <div class="pt-inner">
-    <div style="position:relative">
-      <div class="pt-avatar">🛒</div>
-      <div style="position:absolute;bottom:0;right:0;width:10px;height:10px;background:#22c55e;border-radius:50%;border:2px solid #1a1a1a;animation:ptPulse 1.5s infinite"></div>
-    </div>
-    <div class="pt-text">
-      <div class="pt-name" id="ptName">EJEMPLO · nombre y ciudad ficticios</div>
-      <div class="pt-product" id="ptProduct">Aviso de ejemplo; no representa una compra real.</div>
-    </div>
-    <span class="pt-badge completo" id="ptBadge">Plan completo</span>
-    <button class="pt-close" onclick="document.getElementById('purchaseTag').style.display='none'">✕</button>
-  </div>
-</div>
 
 </div><!-- /wrapper -->
 
@@ -1826,9 +1797,6 @@ function goTo(id) {
   if(id === 's15') {
     var el15 = document.getElementById('s15Nome');
     if(el15 && state.nome) el15.textContent = state.nome;
-  }
-  if(['s_proj','s11b','s12','s13','s14','s15'].indexOf(id) >= 0 && window.startPurchaseTag) {
-    window.startPurchaseTag();
   }
 }
 
@@ -2147,89 +2115,6 @@ document.addEventListener('DOMContentLoaded', function() {
   var el = document.getElementById('dataObstetra');
   if(el) el.textContent = getNextSecondSaturday();
 })();
-
-// =================== PURCHASE TAG ===================
-document.addEventListener('DOMContentLoaded', function() {
-(function(){
-  var compradores = [
-    // Maquetas para revisión, marcadas como simulación; no son compras reales.
-    {n:'Laura M. — Medellín, Colombia', plano:'completo'},
-    {n:'Mariana R. — Ciudad de México, México', plano:'basico'},
-    {n:'Lucía G. — Madrid, España', plano:'completo'},
-  ];
-
-  // Sequência: 3, 4, 5 completos → 1 básico, repetindo
-  // Intervalos: 5s, 3s, 7s, 3s, 9s, 5s, 3s, ...
-  var intervalos = [5000, 3000, 7000, 3000, 9000, 5000, 3000, 7000, 4000];
-  var sequencia = [];
-
-  function buildSequencia() {
-    // embaralhar completos
-    var completos = compradores.filter(function(c){ return c.plano==='completo'; });
-    var basicos = compradores.filter(function(c){ return c.plano==='basico'; });
-    completos.sort(function(){ return Math.random()-.5; });
-    basicos.sort(function(){ return Math.random()-.5; });
-    sequencia = [];
-    var ci=0, bi=0, count=0;
-    while(sequencia.length < 30) {
-      var lote = 3 + Math.floor(Math.random()*3); // 3,4 ou 5 completos
-      for(var i=0; i<lote; i++){
-        sequencia.push(completos[ci % completos.length]);
-        ci++;
-      }
-      sequencia.push(basicos[bi % basicos.length]);
-      bi++;
-    }
-  }
-  buildSequencia();
-
-  var idx = 0, timerIdx = 0;
-  var tag = document.getElementById('purchaseTag');
-  var nameEl = document.getElementById('ptName');
-  var prodEl = document.getElementById('ptProduct');
-  var badgeEl = document.getElementById('ptBadge');
-
-  function mostrarTag() {
-    var c = sequencia[idx % sequencia.length];
-    idx++;
-
-    nameEl.textContent = 'EJEMPLO · ' + c.n;
-    if(c.plano === 'completo') {
-      prodEl.textContent = 'Aviso de ejemplo; no representa una compra real.';
-      badgeEl.textContent = 'Plan completo';
-      badgeEl.className = 'pt-badge completo';
-    } else {
-      prodEl.textContent = 'Aviso de ejemplo; no representa una compra real.';
-      badgeEl.textContent = 'Plan básico';
-      badgeEl.className = 'pt-badge basico';
-    }
-
-    tag.style.display = 'block';
-    var inner = tag.querySelector('.pt-inner');
-    inner.style.animation = 'none';
-    void inner.offsetWidth;
-    inner.style.animation = 'ptSlideIn .4s cubic-bezier(.34,1.56,.64,1)';
-
-    // Esconder após 4.5s
-    setTimeout(function(){
-      inner.style.animation = 'ptFadeOut .35s ease forwards';
-      setTimeout(function(){ tag.style.display='none'; }, 350);
-    }, 4500);
-
-    // Agendar próximo
-    var intervalo = intervalos[timerIdx % intervalos.length];
-    timerIdx++;
-    setTimeout(mostrarTag, intervalo + 4800); // 4800 = tempo visível + fade
-  }
-
-  // Iniciar somente após s11b (diagnóstico) — ativado via window.purchaseTagReady
-  window.startPurchaseTag = function() {
-    if(window._tagStarted) return;
-    window._tagStarted = true;
-    setTimeout(mostrarTag, 1500);
-  };
-})();
-});
 
 // =================== LIVE COUNTER ===================
 document.addEventListener('DOMContentLoaded', function() {
